@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">دفتر حساب</string>
+    <string name="title_activity_main">دفتر حساب</string>
+    <string name="package_name">com.studio.invoice</string>
+    <string name="custom_url_scheme">com.studio.invoice</string>
+</resources>

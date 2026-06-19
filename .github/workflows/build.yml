@@ -1,0 +1,65 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+env:
+  ACTIONS_RUNNER_FORCE_NODE_JS: '20'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@main
+
+    - name: Setup Node.js
+      uses: actions/setup-node@main
+      with:
+        node-version: '20'
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@main
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install dependencies
+      run: npm install --legacy-peer-deps
+
+    # ساخت پوشه www و کپی کردن فایل‌های اصلی پروژه داخل آن
+    - name: Prepare www directory
+      run: |
+        mkdir -p www
+        cp *.html *.js *.css www/ 2>/dev/null || true
+        # اگر پوشه assets یا پوشه‌های مشابه دارید اینجا کپی می‌شوند
+        if [ -d "assets" ]; then cp -r assets www/; fi
+        if [ -d "img" ]; then cp -r img www/; fi
+        if [ -d "css" ]; then cp -r css www/; fi
+
+    # ساخت تنظیمات کپاسیتور با مسیر صحیح
+    - name: Initialize Capacitor
+      run: if [ ! -f capacitor.config.json ]; then npx cap init "دفتر حساب" "com.studio.invoice" --web-dir=www; fi
+
+    - name: Add Android platform
+      run: npx cap add android
+
+    - name: Sync Capacitor
+      run: npx cap sync android
+
+    - name: Make Gradle Executable
+      run: chmod +x android/gradlew
+
+    - name: Build APK
+      run: cd android && ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: Invoice-App-APK
+        path: android/app/build/outputs/apk/debug/app-debug.apk
